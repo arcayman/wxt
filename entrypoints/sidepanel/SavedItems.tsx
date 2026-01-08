@@ -11,10 +11,11 @@ export function SavedItems({ }: SavedItemsProps) {
     const [name, setName] = useState('')
 
     // load once (sync)
-    useEffect(() => {
-        getCategories().then(setCategories)
-    }, [])
-
+   useEffect(() => {
+  browser.runtime
+    .sendMessage({ type: 'GET_CATEGORIES' })
+    .then(setCategories)
+}, [])
     async function addCategory() {
         if (!name.trim()) return
 
