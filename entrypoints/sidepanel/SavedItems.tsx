@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Category } from './types'
-import { getCategories, saveCategories } from './storage/categories'
+import { categoriesStorage, type Category } from './storage/categories'
 
 type SavedItemsProps = {
     onNavigate: (route: 'home' | 'saved') => void
@@ -10,12 +9,16 @@ export function SavedItems({ }: SavedItemsProps) {
     const [categories, setCategories] = useState<Category[]>([])
     const [name, setName] = useState('')
 
-    // load once (sync)
-   useEffect(() => {
-  browser.runtime
-    .sendMessage({ type: 'GET_CATEGORIES' })
-    .then(setCategories)
-}, [])
+    useEffect(() => {
+        categoriesStorage.getValue().then(setCategories)
+
+        const unwatch = categoriesStorage.watch((newValue) => {
+            setCategories(newValue ?? [])
+        })
+
+        return unwatch
+    }, [])
+
     async function addCategory() {
         if (!name.trim()) return
 
@@ -27,18 +30,17 @@ export function SavedItems({ }: SavedItemsProps) {
         const updated = [...categories, newCategory]
         setCategories(updated)
         setName('')
-        await saveCategories(updated)
+        await categoriesStorage.setValue(updated)
     }
+
     return (
         <div className="p-4 space-y-4">
-            <h2 className="text-lg font-semibold">
-                Categories
-            </h2>
-            {/* Create category */}
+            <h2 className="text-lg font-semibold">Categories</h2>
             <div className="flex gap-2">
                 <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addCategory()}
                     placeholder="New category"
                     className="flex-1 px-2 py-1 text-white rounded border border-blue-200 h-8"
                 />
@@ -49,22 +51,6 @@ export function SavedItems({ }: SavedItemsProps) {
                     Add
                 </button>
             </div>
-            {/*search index*/}
-            <div className="flex gap-2">
-                <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="New category"
-                    className="flex-1 px-2 py-1 text-white rounded border border-blue-200 h-8"
-                />
-                <button
-                    onClick={addCategory}
-                    className="px-3 py-1 bg-blue-600 rounded text-sm"
-                >
-                    Search
-                </button>
-            </div>
-            {/* Category list */}
             <ul className="space-y-1">
                 {categories.map((cat) => (
                     <li

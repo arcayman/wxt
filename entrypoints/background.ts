@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser'
+import { storage } from '#imports'
 
 export type Category = {
   id: string
@@ -6,43 +7,39 @@ export type Category = {
   createdAt: number
 }
 
+// Define storage items with type safety
+const categoriesStorage = storage.defineItem<Category[]>('sync:categories', {
+  defaultValue: [],
+})
+
+const itemsStorage = storage.defineItem<any[]>('sync:saved_items', {
+  defaultValue: [],
+})
+
 export default {
   main() {
-    const CATEGORIES_KEY = 'categories'
-    const ITEMS_KEY = 'saved_items'
-
+    // Tell Chrome how side panel works
     browser.sidePanel.setPanelBehavior({
       openPanelOnActionClick: true,
     })
 
+    // Message listener
     browser.runtime.onMessage.addListener(async (msg) => {
       // ===== CATEGORIES =====
       if (msg.type === 'GET_CATEGORIES') {
-        const result = await browser.storage.sync.get(CATEGORIES_KEY)
-        const categories =
-          result[CATEGORIES_KEY] as Category[] | undefined
-        return categories ?? []
+        return await categoriesStorage.getValue()
       }
 
       if (msg.type === 'SET_CATEGORIES') {
-        await browser.storage.sync.set({
-          [CATEGORIES_KEY]: msg.payload,
-        })
+        await categoriesStorage.setValue(msg.payload)
         return true
       }
 
       // ===== SAVED ITEMS =====
       if (msg.type === 'SAVE_ITEM') {
-        const result = await browser.storage.sync.get(ITEMS_KEY)
-        const items =
-          (result[ITEMS_KEY] as any[] | undefined) ?? []
-
+        const items = await itemsStorage.getValue()
         const updated = [...items, msg.payload]
-
-        await browser.storage.sync.set({
-          [ITEMS_KEY]: updated,
-        })
-
+        await itemsStorage.setValue(updated)
         return { ok: true }
       }
     })

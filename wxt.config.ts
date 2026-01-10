@@ -5,10 +5,10 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
-    permissions: ['sidePanel','storage'], // Required for Chrome
-    action: {}, // Required for the side panel to open on icon click
+    permissions: ['storage', 'sidePanel'],
+    action: {},
   },
-    vite: () => ({
+  vite: () => ({
     plugins: [tailwindcss()],
   })
 });
