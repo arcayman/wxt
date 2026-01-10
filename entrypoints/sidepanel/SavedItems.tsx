@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { categoriesStorage, type Category } from './storage/categories'
+import { browser } from 'wxt/browser'
+import { getCategories, saveCategories, type Category } from './storage/categories'
 
+// Add this type back
 type SavedItemsProps = {
     onNavigate: (route: 'home' | 'saved') => void
 }
@@ -10,13 +12,24 @@ export function SavedItems({ }: SavedItemsProps) {
     const [name, setName] = useState('')
 
     useEffect(() => {
-        categoriesStorage.getValue().then(setCategories)
-
-        const unwatch = categoriesStorage.watch((newValue) => {
-            setCategories(newValue ?? [])
+        getCategories().then((cats) => {
+            console.log('📦 Categories loaded:', cats)
+            setCategories(cats)
         })
 
-        return unwatch
+        // Listen for changes from any device
+        const listener = (changes: any, areaName: string) => {
+            console.log('🔔 Storage changed:', { changes, areaName })
+            if (areaName === 'sync' && changes.categories) {
+                console.log('🌐 Categories synced from another device:', changes.categories.newValue)
+                setCategories(changes.categories.newValue || [])
+            }
+        }
+        browser.storage.onChanged.addListener(listener)
+
+        return () => {
+            browser.storage.onChanged.removeListener(listener)
+        }
     }, [])
 
     async function addCategory() {
@@ -30,7 +43,8 @@ export function SavedItems({ }: SavedItemsProps) {
         const updated = [...categories, newCategory]
         setCategories(updated)
         setName('')
-        await categoriesStorage.setValue(updated)
+
+        await saveCategories(updated)
     }
 
     return (

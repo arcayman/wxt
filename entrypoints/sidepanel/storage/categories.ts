@@ -1,4 +1,4 @@
-import { storage } from '#imports'
+import { browser } from 'wxt/browser'
 
 export type Category = {
   id: string
@@ -6,19 +6,16 @@ export type Category = {
   createdAt: number
 }
 
-export const categoriesStorage = storage.defineItem<Category[]>('sync:categories', {
-  defaultValue: [],
-})
+const STORAGE_KEY = 'categories'
 
-export const itemsStorage = storage.defineItem<any[]>('sync:saved_items', {
-  defaultValue: [],
-})
-
-// Optional: Keep these helper functions if other parts of your code use them
 export async function getCategories(): Promise<Category[]> {
-  return await categoriesStorage.getValue()
+  const result = await browser.storage.sync.get(STORAGE_KEY)
+  // Fix: Ensure we always return an array
+  const categories = result[STORAGE_KEY]
+  return Array.isArray(categories) ? categories : []
 }
 
 export async function saveCategories(categories: Category[]) {
-  await categoriesStorage.setValue(categories)
+  await browser.storage.sync.set({ [STORAGE_KEY]: categories })
+  console.log('✅ Saved to sync storage:', categories)
 }
