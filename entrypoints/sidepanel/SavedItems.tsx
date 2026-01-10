@@ -46,6 +46,14 @@ export function SavedItems({ }: SavedItemsProps) {
 
         await saveCategories(updated)
     }
+    async function debugStorage() {
+        const syncData = await browser.storage.sync.get(null)
+        console.log('🔍 ALL sync storage keys:', Object.keys(syncData))
+        console.log('🔍 Full sync storage:', syncData)
+
+        const cats = await getCategories()
+        console.log('🔍 Categories:', cats)
+    }
 
     return (
         <div className="p-4 space-y-4">
@@ -64,6 +72,13 @@ export function SavedItems({ }: SavedItemsProps) {
                 >
                     Add
                 </button>
+                <button
+                    onClick={debugStorage}
+                    className="px-3 py-1 bg-gray-600 rounded text-sm"
+                >
+                    Debug
+                </button>
+
             </div>
             <ul className="space-y-1">
                 {categories.map((cat) => (
